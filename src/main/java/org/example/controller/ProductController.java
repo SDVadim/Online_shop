@@ -1,8 +1,9 @@
-package org.example;
+package org.example.controller;
 
 import jakarta.validation.Valid;
-import org.example.DTO.ProductRequest;
-import org.example.DTO.ProductResponse;
+import org.example.controller.dto.ProductRequest;
+import org.example.controller.dto.ProductResponse;
+import org.example.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-public class MainController {
+public class ProductController {
 
     ProductService productService;
 
-    public MainController(ProductService productService) {
+    public ProductController(ProductService productService) {
         this.productService = productService;
     }
 

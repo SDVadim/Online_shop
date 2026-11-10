@@ -1,20 +1,18 @@
-package org.example.Repository.Entities;
-
-
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import org.hibernate.validator.constraints.UUID;
+package org.example.repository.Entities;
 
 import java.math.BigDecimal;
 
 public class ProductEntityExample {
-
   private Long id;
   private String name;
   private BigDecimal price;
 
   public ProductEntityExample(String name, BigDecimal price) {
     this.name = name;
+    extracted(price);
+  }
+
+  private void extracted(BigDecimal price) {
     this.price = price;
   }
 

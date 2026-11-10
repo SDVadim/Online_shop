@@ -1,10 +1,9 @@
-package org.example;
+package org.example.service;
 
-import org.example.DTO.ProductRequest;
-import org.example.DTO.ProductResponse;
-import org.example.Repository.Entities.ProductEntity;
-import org.example.Repository.Entities.ProductEntityExample;
-import org.example.Repository.ProductsRepository;
+import org.example.controller.dto.ProductRequest;
+import org.example.controller.dto.ProductResponse;
+import org.example.repository.Entities.ProductEntity;
+import org.example.repository.ProductsRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -38,23 +37,21 @@ public class ProductService {
         }
     }
 
-    List<ProductResponse> getAll() {
+    public List<ProductResponse> getAll() {
         return productsRepository.findAll().stream()
             .map(entity -> {
                 return new ProductResponse(entity.getId(), entity.getName(), entity.getPrice());
             })
             .toList();
-
-
     }
 
-    ProductResponse update(Long id, ProductRequest product) {
+    public ProductResponse update(Long id, ProductRequest product) {
         var entity = new ProductEntity(id ,product.name(), product.price());
         productsRepository.save(entity);
         return getById(id);
     }
 
-    void deleteProduct(Long id) {
+    public void deleteProduct(Long id) {
         productsRepository.deleteById(id);
     }
 

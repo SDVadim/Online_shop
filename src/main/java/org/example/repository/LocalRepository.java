@@ -1,9 +1,6 @@
-package org.example.Repository;
+package org.example.repository;
 
-
-import org.example.Repository.Entities.ProductEntityExample;
-import org.springframework.stereotype.Repository;
-
+import org.example.repository.Entities.ProductEntityExample;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
