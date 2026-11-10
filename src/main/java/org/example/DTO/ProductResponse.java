@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record ProductResponse(
+    @NotNull Long id,
     @NotBlank String name,
-    @Min(0) BigDecimal price,
-    @NotNull Long id
+    @Min(0) BigDecimal price
 ) {}

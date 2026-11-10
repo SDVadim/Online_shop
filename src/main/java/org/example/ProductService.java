@@ -31,7 +31,7 @@ public class ProductService {
         Optional<ProductEntity> entity = productsRepository.findById(id);
         if (entity.isPresent()) {
 
-            ProductResponse response = new ProductResponse(entity.get().getName(), entity.get().getPrice(), entity.get().getId());
+            ProductResponse response = new ProductResponse(entity.get().getId(), entity.get().getName(), entity.get().getPrice());
             return response;
         } else {
             return null;
@@ -41,7 +41,7 @@ public class ProductService {
     List<ProductResponse> getAll() {
         return productsRepository.findAll().stream()
             .map(entity -> {
-                return new ProductResponse(entity.getName(), entity.getPrice(), entity.getId());
+                return new ProductResponse(entity.getId(), entity.getName(), entity.getPrice());
             })
             .toList();
 
