@@ -9,18 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Repository
-public class LocalRepository implements ProductsRepository {
+//@Repository
+public class LocalRepository /* implements ProductsRepository */{
 
   private List<ProductEntityExample> products = new ArrayList<>();
   AtomicLong counter = new AtomicLong(0);
 
-  @Override
+//  @Override
   public List<ProductEntityExample> findAll() {
     return products;
   }
 
-  @Override
+//  @Override
   public ProductEntityExample findById(Long id) {
     return products.stream()
         .filter(product -> product.getId().equals(id))
@@ -28,7 +28,7 @@ public class LocalRepository implements ProductsRepository {
         .orElse(null);
   }
 
-  @Override
+//  @Override
   public Long addProduct(String name, BigDecimal price) {
     ProductEntityExample entity = new ProductEntityExample(name, price);
     entity.setId(counter.incrementAndGet());
@@ -36,7 +36,7 @@ public class LocalRepository implements ProductsRepository {
     return entity.getId();
   }
 
-  @Override
+//  @Override
   public void updateProduct(ProductEntityExample product) {
     for (ProductEntityExample productEntity : products) {
       if (productEntity.getId().equals(product.getId())) {
@@ -45,7 +45,7 @@ public class LocalRepository implements ProductsRepository {
     }
   }
 
-  @Override
+//  @Override
   public void deleteProduct(Long id) {
       products.removeIf(product -> product.getId().equals(id));
   }

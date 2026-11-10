@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: online_shop
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD:
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - online_shop
+
+
+
+volumes:
+  postgres_data:
+
+
+networks:
+  online_shop:
+    driver: bridge

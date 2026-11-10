@@ -2,11 +2,14 @@ package org.example;
 
 import org.example.DTO.ProductRequest;
 import org.example.DTO.ProductResponse;
+import org.example.Repository.Entities.ProductEntity;
 import org.example.Repository.Entities.ProductEntityExample;
 import org.example.Repository.ProductsRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -19,14 +22,20 @@ public class ProductService {
 
 
     public Long addProduct(ProductRequest product) {
-        Long id = productsRepository.addProduct(product.name(), product.price());
+        ProductEntity entity = create(product.name(), product.price());
+        Long id = productsRepository.save(entity).getId();
         return id;
     }
 
     public ProductResponse getById(Long id) {
-        ProductEntityExample entity = productsRepository.findById(id);
-        ProductResponse response = new ProductResponse(entity.getName(), entity.getPrice(), entity.getId());
-        return response;
+        Optional<ProductEntity> entity = productsRepository.findById(id);
+        if (entity.isPresent()) {
+
+            ProductResponse response = new ProductResponse(entity.get().getName(), entity.get().getPrice(), entity.get().getId());
+            return response;
+        } else {
+            return null;
+        }
     }
 
     List<ProductResponse> getAll() {
@@ -40,14 +49,19 @@ public class ProductService {
     }
 
     ProductResponse update(Long id, ProductRequest product) {
-        var entity = new ProductEntityExample(product.name(), product.price(), id);
-        productsRepository.updateProduct(entity);
+        var entity = new ProductEntity(id ,product.name(), product.price());
+        productsRepository.save(entity);
         return getById(id);
     }
 
     void deleteProduct(Long id) {
-        productsRepository.deleteProduct(id);
+        productsRepository.deleteById(id);
     }
 
-
+    public ProductEntity create(String productName, BigDecimal price) {
+        return ProductEntity.builder()
+            .name(productName)
+            .price(price)
+            .build();
+    }
 }
