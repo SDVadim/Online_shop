@@ -2,12 +2,12 @@ package org.example.repository.Entities;
 
 import java.math.BigDecimal;
 
-public class ProductEntityExample {
+public class ProductEntityLocal {
   private Long id;
   private String name;
   private BigDecimal price;
 
-  public ProductEntityExample(String name, BigDecimal price) {
+  public ProductEntityLocal(String name, BigDecimal price) {
     this.name = name;
     extracted(price);
   }
@@ -16,7 +16,7 @@ public class ProductEntityExample {
     this.price = price;
   }
 
-  public ProductEntityExample(String name, BigDecimal price, Long id) {
+  public ProductEntityLocal(String name, BigDecimal price, Long id) {
     this.name = name;
     this.price = price;
     this.id = id;

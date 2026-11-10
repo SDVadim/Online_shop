@@ -1,6 +1,6 @@
 package org.example.repository;
 
-import org.example.repository.Entities.ProductEntityExample;
+import org.example.repository.Entities.ProductEntityLocal;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,16 +9,16 @@ import java.util.concurrent.atomic.AtomicLong;
 //@Repository
 public class LocalRepository /* implements ProductsRepository */{
 
-  private List<ProductEntityExample> products = new ArrayList<>();
+  private List<ProductEntityLocal> products = new ArrayList<>();
   AtomicLong counter = new AtomicLong(0);
 
 //  @Override
-  public List<ProductEntityExample> findAll() {
+  public List<ProductEntityLocal> findAll() {
     return products;
   }
 
 //  @Override
-  public ProductEntityExample findById(Long id) {
+  public ProductEntityLocal findById(Long id) {
     return products.stream()
         .filter(product -> product.getId().equals(id))
         .findFirst()
@@ -27,15 +27,15 @@ public class LocalRepository /* implements ProductsRepository */{
 
 //  @Override
   public Long addProduct(String name, BigDecimal price) {
-    ProductEntityExample entity = new ProductEntityExample(name, price);
+    ProductEntityLocal entity = new ProductEntityLocal(name, price);
     entity.setId(counter.incrementAndGet());
     products.add(entity);
     return entity.getId();
   }
 
 //  @Override
-  public void updateProduct(ProductEntityExample product) {
-    for (ProductEntityExample productEntity : products) {
+  public void updateProduct(ProductEntityLocal product) {
+    for (ProductEntityLocal productEntity : products) {
       if (productEntity.getId().equals(product.getId())) {
         products.set(products.indexOf(productEntity),product);
       }
