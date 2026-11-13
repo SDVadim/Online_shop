@@ -57,6 +57,9 @@ public class CategoryService {
     }
 
     public void delete(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new ResourceNotFoundException(Resource.CATEGORY, id);
+        }
         boolean isUsed = productRepository.existsByCategoryId(id);
         if (!isUsed) {
             categoryRepository.deleteById(id);
