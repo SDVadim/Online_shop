@@ -12,51 +12,53 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/products")
 public class ProductController {
-
     ProductService productService;
 
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
-    @GetMapping("/api/hello")
-    public String hello() {
-        return "Hello World";
-    }
-
-    @PostMapping("/api/products/add")
+    @PostMapping("/add")
     public ResponseEntity<Long> addProduct(@RequestBody @Valid ProductRequest product) {
         Long id = productService.addProduct(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(id);
     }
 
-    @GetMapping("/api/products/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
         ProductResponse response = productService.getById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @GetMapping("/api/products")
+    @GetMapping
     public ResponseEntity<List<ProductResponse>> getAllProducts() {
         List<ProductResponse> response = productService.getAll();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @PutMapping("/api/products/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody @Valid ProductRequest product) {
         ProductResponse response = productService.update(id, product);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @DeleteMapping("/api/products/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/category/{id}")
+    public ResponseEntity<List<ProductResponse>> getAllProductsByCategoryId(@PathVariable Long id) {
+        List<ProductResponse> response = productService.getAllProductsByCategoryId(id);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

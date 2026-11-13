@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -35,4 +37,14 @@ public class ProductEntity {
     @Column(name = "price", nullable = false)
     @PositiveOrZero
     private BigDecimal price;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private CategoryEntity category;
+
+    public void update(String newName, BigDecimal newPrice, CategoryEntity newCategory) {
+        this.name = newName;
+        this.price = newPrice;
+        this.category = newCategory;
+    }
 }
