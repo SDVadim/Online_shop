@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,7 +28,6 @@ public class ProductEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "product_id")
     private Long id;
 
     @Column(name = "name", nullable = false)
@@ -40,6 +40,7 @@ public class ProductEntity {
 
     @ManyToOne
     @JoinColumn(name = "category_id")
+    @NotNull
     private CategoryEntity category;
 
     public void update(String newName, BigDecimal newPrice, CategoryEntity newCategory) {

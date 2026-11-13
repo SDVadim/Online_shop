@@ -2,12 +2,14 @@ package org.example.service;
 
 import org.example.controller.dto.CategoryRequest;
 import org.example.controller.dto.CategoryResponse;
+import org.example.exception.CategoryNotEmptyException;
 import org.example.mapper.CategoryMapper;
 import org.example.repository.CategoryRepository;
 import org.example.repository.Entities.CategoryEntity;
 import org.example.repository.ProductRepository;
-import org.example.repository.ResourceNotFoundException;
+import org.example.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
+import org.example.exception.ResourceNotFoundException.Resource;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class CategoryService {
 
     public CategoryResponse get(Long id) {
         CategoryEntity entity = categoryRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Category with ID: " + id + " not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(Resource.CATEGORY, id));
         return categoryMapper.toResponse(entity);
     }
 
@@ -47,7 +49,7 @@ public class CategoryService {
 
     public CategoryResponse update(Long id, CategoryRequest categoryRequest) {
         CategoryEntity entity = categoryRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Category with ID: " + id + " not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(Resource.CATEGORY, id));
         entity.update(categoryRequest.name());
 
         categoryRepository.save(entity);
@@ -55,7 +57,7 @@ public class CategoryService {
     }
 
     public void delete(Long id) {
-        boolean isUsed = productRepository.existsByCategory_Id(id);
+        boolean isUsed = productRepository.existsByCategoryId(id);
         if (!isUsed) {
             categoryRepository.deleteById(id);
         } else {

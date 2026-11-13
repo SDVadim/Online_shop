@@ -7,7 +7,8 @@ import org.example.repository.CategoryRepository;
 import org.example.repository.Entities.CategoryEntity;
 import org.example.repository.Entities.ProductEntity;
 import org.example.repository.ProductRepository;
-import org.example.repository.ResourceNotFoundException;
+import org.example.exception.ResourceNotFoundException;
+import org.example.exception.ResourceNotFoundException.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,15 +35,14 @@ public class ProductService {
     public Long addProduct(ProductRequest product) {
 
         CategoryEntity categoryEntity = categoryRepository.findById(product.categoryId())
-            .orElseThrow(() -> new ResourceNotFoundException("Category with ID:" + product.categoryId() + " not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(Resource.CATEGORY, product.categoryId()));
         ProductEntity entity = productMapper.toEntity(product, categoryEntity);
-        Long id = productRepository.save(entity).getId();
-        return id;
+        return productRepository.save(entity).getId();
     }
 
     public ProductResponse getById(Long id) {
         ProductEntity entity = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product with ID:" + id + " not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(Resource.PRODUCT, id));
 
         return productMapper.toResponse(entity);
 
@@ -56,10 +56,10 @@ public class ProductService {
 
     public ProductResponse update(Long id, ProductRequest product) {
         CategoryEntity categoryEntity = categoryRepository.findById(product.categoryId())
-            .orElseThrow(() -> new ResourceNotFoundException("Category with ID:" + product.categoryId() + " not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(Resource.CATEGORY, product.categoryId()));
 
         ProductEntity productEntity = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product with ID:" + id + " not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(Resource.PRODUCT, id));
 
         productEntity.update(product.name(), product.price(), categoryEntity);
         productRepository.save(productEntity);
@@ -68,10 +68,16 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException(Resource.PRODUCT, id);
+        }
         productRepository.deleteById(id);
     }
 
     public List<ProductResponse> getAllProductsByCategoryId(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new ResourceNotFoundException(Resource.CATEGORY, id);
+        }
         return productRepository.findByCategoryId(id).stream()
             .map(productMapper::toResponse)
             .toList();
