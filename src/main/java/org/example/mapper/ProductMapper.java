@@ -12,7 +12,7 @@ public class ProductMapper {
         return ProductResponse.builder()
             .id(entity.getId())
             .name(entity.getName())
-            .category_id(entity.getCategory().getId())
+            .categoryId(entity.getCategory().getId())
             .price(entity.getPrice())
             .build();
     }

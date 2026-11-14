@@ -69,6 +69,6 @@ public class CategoryController {
         @PathVariable Long id
     ) {
         categoryService.delete(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

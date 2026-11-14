@@ -9,5 +9,5 @@ public record ProductResponse(
     Long id,
     String name,
     BigDecimal price,
-    Long category_id
+    Long categoryId
 ) {}

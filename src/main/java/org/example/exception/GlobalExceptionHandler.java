@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
         CategoryNotEmptyException e,
         HttpServletRequest request
     ) {
-        return errorMapper(HttpStatus.BAD_REQUEST, e.getMessage(), request, Map.of());
+        return errorMapper(HttpStatus.CONFLICT, e.getMessage(), request, Map.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
     }
 
     @Builder
-    private record ErrorResponse(
+    public record ErrorResponse(
         Instant timestamp,
         int status,
         String message,
