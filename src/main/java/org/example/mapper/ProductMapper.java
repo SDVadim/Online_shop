@@ -17,11 +17,11 @@ public class ProductMapper {
             .build();
     }
 
-    public ProductEntity toEntity(ProductRequest productResponse, CategoryEntity category) {
+    public ProductEntity toEntity(ProductRequest productRequest, CategoryEntity category) {
         return ProductEntity.builder()
             .category(category)
-            .name(productResponse.name())
-            .price(productResponse.price())
+            .name(productRequest.name())
+            .price(productRequest.price())
             .build();
     }
 }
