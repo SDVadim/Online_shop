@@ -87,7 +87,7 @@ class ProductServiceTest {
     @Test
     void addProductWhenCategoryDoesNotExist() {
         createTestFields();
-        when(categoryRepository.existsById(anyLong())).thenReturn(false);
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> productService.addProduct(productRequest));
 
