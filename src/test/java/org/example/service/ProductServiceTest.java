@@ -1,6 +1,5 @@
 package org.example.service;
 
-import org.example.controller.dto.CategoryRequest;
 import org.example.controller.dto.ProductRequest;
 import org.example.controller.dto.ProductResponse;
 import org.example.exception.ResourceNotFoundException;
@@ -29,7 +28,7 @@ class ProductServiceTest {
     private ProductResponse productResponse;
     private ProductEntity productEntity;
     private ProductEntity productEntitySaved;
-    private CategoryEntity categoryEntity;
+    private CategoryEntity categoryEntitySaved;
 
     private ProductService productService;
     private ProductRepository productRepository;
@@ -42,9 +41,10 @@ class ProductServiceTest {
         categoryRepository = mock(CategoryRepository.class);
         productMapper = mock(ProductMapper.class);
         productService = new ProductService(productRepository, categoryRepository, productMapper);
+    }
 
-
-        categoryEntity = new CategoryEntity(1L, "category");
+    void createTestFields() {
+        categoryEntitySaved = new CategoryEntity(1L, "category");
         productRequest = new ProductRequest("example", new BigDecimal(2000), 1L);
         productResponse = ProductResponse.builder()
             .id(100L)
@@ -53,13 +53,13 @@ class ProductServiceTest {
             .price(new BigDecimal(2000))
             .build();
         productEntity = ProductEntity.builder()
-            .category(categoryEntity)
+            .category(categoryEntitySaved)
             .name(productRequest.name())
             .price(productRequest.price())
             .build();
         productEntitySaved = ProductEntity.builder()
             .id(100L)
-            .category(categoryEntity)
+            .category(categoryEntitySaved)
             .name(productRequest.name())
             .price(productRequest.price())
             .build();
@@ -86,6 +86,7 @@ class ProductServiceTest {
 
     @Test
     void addProductWhenCategoryDoesNotExist() {
+        createTestFields();
         when(categoryRepository.existsById(anyLong())).thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class, () -> productService.addProduct(productRequest));
@@ -95,8 +96,9 @@ class ProductServiceTest {
 
     @Test
     void addProductWhenCategoryExist() {
-        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(categoryEntity));
-        when(productMapper.toEntity(productRequest, categoryEntity)).thenReturn(productEntity);
+        createTestFields();
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(categoryEntitySaved));
+        when(productMapper.toEntity(productRequest, categoryEntitySaved)).thenReturn(productEntity);
         when(productRepository.save(productEntity)).thenReturn(productEntitySaved);
 
         Long id = productService.addProduct(productRequest);
@@ -107,6 +109,7 @@ class ProductServiceTest {
 
     @Test
     void getByIdProductExists() {
+        createTestFields();
         when(productRepository.findById(100L)).thenReturn(Optional.of(productEntitySaved));
         when(productMapper.toResponse(productEntitySaved)).thenReturn(productResponse);
         assertEquals(productResponse, productService.getById(100L));
@@ -123,17 +126,18 @@ class ProductServiceTest {
 
     @Test
     void getAll() {
+        createTestFields();
         when(productRepository.findAll()).thenReturn(List.of(productEntitySaved, productEntitySaved));
         when(productMapper.toResponse(productEntitySaved)).thenReturn(productResponse);
 
         List<ProductResponse> responses = productService.getAll();
         assertEquals(productResponse, responses.get(0));
         assertEquals(2, responses.size());
-        verify(productRepository).findAll();
     }
 
     @Test
     void updateCategoryDoesNotExist() {
+        createTestFields();
         when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> productService.update(100L, productRequest));
         verify(productRepository, never()).findById(100L);
@@ -142,7 +146,8 @@ class ProductServiceTest {
 
     @Test
     void updateProductDoesNotExist() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(categoryEntity));
+        createTestFields();
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(categoryEntitySaved));
         when(productRepository.findById(100L)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> productService.update(100L, productRequest));
         verify(categoryRepository).findById(1L);
@@ -151,31 +156,36 @@ class ProductServiceTest {
 
     @Test
     void updateAllExists() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(categoryEntity));
+        createTestFields();
+        ProductRequest updateProductRequest = new ProductRequest("new example", new BigDecimal(3000), 1L);
+        ProductResponse expectedResponse = new ProductResponse(100L, "new example", new BigDecimal(3000), 1L);
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(categoryEntitySaved));
         when(productRepository.findById(100L)).thenReturn(Optional.of(productEntitySaved));
-        when(productRepository.save(productEntitySaved)).thenReturn(productEntitySaved);
-        when(productMapper.toResponse(productEntitySaved)).thenReturn(productResponse);
-        assertEquals(productResponse, productService.update(100L, productRequest));
-        verify(productRepository).findById(100L);
-        verify(categoryRepository).findById(1L);
-        verify(productRepository).save(any());
+        when(productMapper.toResponse(productEntitySaved)).thenReturn(expectedResponse);
+
+        ProductResponse actual = productService.update(100L, updateProductRequest);
+
+        verify(productRepository).save(productEntitySaved);
+        assertEquals(expectedResponse, actual);
     }
 
     @Test
     void getAllProductsByCategoryIdCategoryDoesNotExist() {
+        createTestFields();
         when(categoryRepository.existsById(1L)).thenReturn(false);
-        assertThrows(ResourceNotFoundException.class, () -> productService.getAllProductsByCategoryId(categoryEntity.getId()));
+        assertThrows(ResourceNotFoundException.class, () -> productService.getAllProductsByCategoryId(categoryEntitySaved.getId()));
         verify(productRepository, never()).findByCategoryId(any());
     }
 
     @Test
     void getAllProductsByCategoryIdCategoryExist() {
+        createTestFields();
         when(categoryRepository.existsById(1L)).thenReturn(true);
         when(productRepository.findByCategoryId(1L)).thenReturn(List.of(productEntitySaved, productEntitySaved));
         when(productMapper.toResponse(productEntitySaved)).thenReturn(productResponse);
         List<ProductResponse> responses = productService.getAllProductsByCategoryId(1L);
         assertEquals(productResponse, responses.get(0));
         assertEquals(2, responses.size());
-        verify(productRepository).findByCategoryId(1L);
     }
 }

@@ -50,7 +50,7 @@ public class CategoryService {
     public CategoryResponse update(Long id, CategoryRequest categoryRequest) {
         CategoryEntity entity = categoryRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(Resource.CATEGORY, id));
-        entity.update(categoryRequest.name());
+        entity.update(categoryRequest.name()); //todo: сделать независимым от полей
 
         categoryRepository.save(entity);
         return categoryMapper.toResponse(entity);
