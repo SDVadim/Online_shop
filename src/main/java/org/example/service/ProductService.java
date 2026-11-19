@@ -10,6 +10,7 @@ import org.example.repository.ProductRepository;
 import org.example.exception.ResourceNotFoundException;
 import org.example.exception.ResourceNotFoundException.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -32,28 +33,30 @@ public class ProductService {
     }
 
 
+    @Transactional
     public Long addProduct(ProductRequest product) {
-
         CategoryEntity categoryEntity = categoryRepository.findById(product.categoryId())
             .orElseThrow(() -> new ResourceNotFoundException(Resource.CATEGORY, product.categoryId()));
         ProductEntity entity = productMapper.toEntity(product, categoryEntity);
         return productRepository.save(entity).getId();
     }
 
+    @Transactional(readOnly = true)
     public ProductResponse getById(Long id) {
         ProductEntity entity = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(Resource.PRODUCT, id));
-
         return productMapper.toResponse(entity);
 
     }
 
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAll() {
         return productRepository.findAll().stream()
             .map(productMapper::toResponse)
             .toList();
     }
 
+    @Transactional
     public ProductResponse update(Long id, ProductRequest product) {
         CategoryEntity categoryEntity = categoryRepository.findById(product.categoryId())
             .orElseThrow(() -> new ResourceNotFoundException(Resource.CATEGORY, product.categoryId()));
@@ -62,11 +65,10 @@ public class ProductService {
             .orElseThrow(() -> new ResourceNotFoundException(Resource.PRODUCT, id));
 
         productEntity.update(product.name(), product.price(), categoryEntity);
-        productRepository.save(productEntity);
-
         return productMapper.toResponse(productEntity);
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
             throw new ResourceNotFoundException(Resource.PRODUCT, id);
@@ -74,6 +76,7 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAllProductsByCategoryId(Long id) {
         if (!categoryRepository.existsById(id)) {
             throw new ResourceNotFoundException(Resource.CATEGORY, id);
