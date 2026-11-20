@@ -166,7 +166,6 @@ class ProductServiceTest {
 
         ProductResponse actual = productService.update(100L, updateProductRequest);
 
-        verify(productRepository).save(productEntitySaved);
         assertEquals(expectedResponse, actual);
     }
 

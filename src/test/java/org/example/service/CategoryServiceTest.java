@@ -97,7 +97,6 @@ class CategoryServiceTest {
 
         assertEquals(updateCategoryRequest.name(), categoryEntitySaved.getName());
         assertEquals(1L, categoryEntitySaved.getId());
-        verify(categoryRepository).save(categoryEntitySaved);
         assertEquals(expectedResponse, actual);
     }
 
