@@ -5,6 +5,10 @@ public class ResourceNotFoundException extends RuntimeException {
         super(resource + " with id: " + id + " not found");
     }
 
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+
     public enum Resource {
         CATEGORY,
         PRODUCT,

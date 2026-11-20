@@ -42,7 +42,15 @@ public class GlobalExceptionHandler {
             String message = fieldError.getDefaultMessage();
             fieldErrors.put(field, message);
         });
-        return errorMapper(HttpStatus.BAD_REQUEST, e.getMessage(), request, fieldErrors);
+        return errorMapper(HttpStatus.BAD_REQUEST, "Validation error", request, fieldErrors);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(
+        UserAlreadyExistsException e,
+        HttpServletRequest request
+    ) {
+        return errorMapper(HttpStatus.CONFLICT, e.getMessage(), request, Map.of());
     }
 
 
