@@ -68,7 +68,7 @@ public class SecurityTest {
 
     @ParameterizedTest(name = "USER: {0} {1} -> 403")
     @MethodSource("data")
-    @WithMockUser(username = "test@test", roles = "USER")
+    @WithMockUser(username = "test@example.com", roles = "USER")
     void userCannotChangeCategory(HttpMethod method, String url, String body) throws Exception {
         long categoryCountBefore = categoryRepository.count();
         long productCountBefore = productRepository.count();
