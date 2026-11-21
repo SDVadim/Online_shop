@@ -42,7 +42,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public ResponseEntity<UserResponse> getProfile(String username) {
         UserEntity user = userRepository.findByEmail(username).orElseThrow(() ->
-            new ResourceNotFoundException("User does not exists"));
+            new ResourceNotFoundException("User does not exist"));
         return ResponseEntity.ok(userMapper.toResponse(user));
     }
 }
