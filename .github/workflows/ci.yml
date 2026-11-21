@@ -29,4 +29,4 @@ jobs:
         run: docker info
 
       - name: Build and run tests
-        run: mvn -B --no-transfer-progress -DfailIfNoTests=true verify
+        run: mvn -B --no-transfer-progress -DfailIfNoTests=true -Dapi.version=1.40 verify
