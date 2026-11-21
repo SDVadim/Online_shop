@@ -27,3 +27,6 @@ jobs:
 
       - name: Check Docker availability
         run: docker info
+
+      - name: Build and run tests
+        run: mvn -B --no-transfer-progress -DfailIfNoTests=true -Dapi.version=1.40 verify
