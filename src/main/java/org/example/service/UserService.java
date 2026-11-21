@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -29,7 +31,7 @@ public class UserService {
 
     @Transactional
     public UserResponse register(UserRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        if (userRepository.existsByEmail(request.email().toLowerCase(Locale.ROOT))) {
             throw new UserAlreadyExistsException("User with this email already exists");
         }
         UserEntity userEntity = userMapper.toEntity(request);
