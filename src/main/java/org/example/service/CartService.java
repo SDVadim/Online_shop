@@ -50,7 +50,7 @@ public class CartService {
 
     @Transactional
     public CartResponse incrementProduct(String email, Long productId) {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow(() ->
+        UserEntity user = userRepository.findByEmailForCartUpdate(email).orElseThrow(() ->
             new ResourceNotFoundException("User does not exist"));
         Optional<CartEntity> cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(
             user.getId(),
@@ -76,7 +76,7 @@ public class CartService {
 
     @Transactional
     public Optional<CartResponse> decrementProduct(String email, Long productId) {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow(() ->
+        UserEntity user = userRepository.findByEmailForCartUpdate(email).orElseThrow(() ->
             new ResourceNotFoundException("User does not exist"));
         CartEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(
             user.getId(),
@@ -95,7 +95,7 @@ public class CartService {
 
     @Transactional
     public void deleteProduct(String email, Long productId) {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow(() ->
+        UserEntity user = userRepository.findByEmailForCartUpdate(email).orElseThrow(() ->
             new ResourceNotFoundException("User does not exist"));
         Optional<CartEntity> cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productId);
         if (cartEntity.isEmpty()) {
@@ -106,7 +106,7 @@ public class CartService {
 
     @Transactional
     public void clearCart(String email) {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow(() ->
+        UserEntity user = userRepository.findByEmailForCartUpdate(email).orElseThrow(() ->
             new ResourceNotFoundException("User does not exist"));
         cartItemRepository.deleteAllByUserId(user.getId());
     }
