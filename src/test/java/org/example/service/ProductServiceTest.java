@@ -4,6 +4,7 @@ import org.example.controller.dto.ProductRequest;
 import org.example.controller.dto.ProductResponse;
 import org.example.exception.ResourceNotFoundException;
 import org.example.mapper.ProductMapper;
+import org.example.repository.CartItemRepository;
 import org.example.repository.CategoryRepository;
 import org.example.repository.Entities.CategoryEntity;
 import org.example.repository.Entities.ProductEntity;
@@ -30,6 +31,7 @@ class ProductServiceTest {
     private ProductEntity productEntitySaved;
     private CategoryEntity categoryEntitySaved;
 
+    private CartItemRepository cartItemRepository;
     private ProductService productService;
     private ProductRepository productRepository;
     private CategoryRepository categoryRepository;
@@ -37,10 +39,11 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
+        cartItemRepository = mock(CartItemRepository.class);
         productRepository = mock(ProductRepository.class);
         categoryRepository = mock(CategoryRepository.class);
         productMapper = mock(ProductMapper.class);
-        productService = new ProductService(productRepository, categoryRepository, productMapper);
+        productService = new ProductService(productRepository, categoryRepository, cartItemRepository, productMapper);
     }
 
     void createTestFields() {

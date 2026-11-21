@@ -18,6 +18,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from UserEntity u where u.email = :email")
     Optional<UserEntity> findByEmailForCartUpdate(@NotBlank String email);
+    //Заблочили пользователя пока он выполняет одну операцию в своей корзине. убрали конкурентную запись
 
     Optional<UserEntity> findByEmail(@NotBlank @Email String email);
 }

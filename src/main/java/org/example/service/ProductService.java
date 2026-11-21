@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.controller.dto.ProductRequest;
 import org.example.controller.dto.ProductResponse;
 import org.example.mapper.ProductMapper;
+import org.example.repository.CartItemRepository;
 import org.example.repository.CategoryRepository;
 import org.example.repository.Entities.CategoryEntity;
 import org.example.repository.Entities.ProductEntity;
@@ -18,17 +19,19 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CartItemRepository cartItemRepository;
 
     private final ProductMapper productMapper;
 
 
     public ProductService(
         ProductRepository repository,
-        CategoryRepository categoryRepository,
+        CategoryRepository categoryRepository, CartItemRepository cartItemRepository,
         ProductMapper productMapper
     ) {
         this.productRepository = repository;
         this.categoryRepository = categoryRepository;
+        this.cartItemRepository = cartItemRepository;
         this.productMapper = productMapper;
     }
 
@@ -73,6 +76,7 @@ public class ProductService {
         if (!productRepository.existsById(id)) {
             throw new ResourceNotFoundException(Resource.PRODUCT, id);
         }
+        cartItemRepository.deleteAllByProductId(id); //todo: подумать как сделать по другому. мб сделать статус товара отсутствует или что-то в это роде
         productRepository.deleteById(id);
     }
 
