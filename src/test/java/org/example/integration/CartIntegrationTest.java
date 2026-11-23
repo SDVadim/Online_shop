@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -90,13 +91,13 @@ public class CartIntegrationTest {
         return productRepository.save(product);
     }
 
-    private CartEntity loadCart(ProductEntity product, UserEntity user) {
+    private void loadCart(ProductEntity product, UserEntity user, int quantity) {
         CartEntity cartEntity = CartEntity.builder()
             .product(product)
             .user(user)
-            .quantity(1)
+            .quantity(quantity)
             .build();
-        return cartItemRepository.save(cartEntity);
+        cartItemRepository.save(cartEntity);
     }
 
     @Test
@@ -133,7 +134,7 @@ public class CartIntegrationTest {
         ProductEntity productEntity = loadProduct();
         UserEntity user = loadUser("user@example.com", UsersRole.USER);
 
-        loadCart(productEntity, user);
+        loadCart(productEntity, user, 1);
 
         CartEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
             .orElseThrow();
@@ -162,18 +163,75 @@ public class CartIntegrationTest {
 
     @Test
     @WithMockUser(username = "user@example.com", roles = "USER")
-    void decrementProductInCartTest() throws Exception {}
+    void decrementProductInCartTest() throws Exception {
+        ProductEntity productEntity = loadProduct();
+        UserEntity user = loadUser("user@example.com", UsersRole.USER);
+        loadCart(productEntity, user, 2);
+
+        CartEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+            .orElseThrow();
+        assertEquals(2, cartEntityBefore.getQuantity());
+        assertEquals(1, cartItemRepository.count());
+
+        RequestBuilder requestBuilder = MockMvcRequestBuilders.post(
+            "/api/cart/items/{productId}/decrement",
+                productEntity.getId()
+            )
+            .with(csrf());
+
+        String response = mockMvc.perform(requestBuilder)
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
+        assertEquals(productEntity.getId(), cartResponse.productId());
+        assertEquals(1, cartResponse.quantity());
+
+        CartEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+            .orElseThrow();
+        assertEquals(1, cartEntity.getQuantity());
+
+        assertEquals(cartEntityBefore.getId(), cartEntity.getId());
+        assertEquals(1, cartItemRepository.count());
+    }
 
     @Test
     @WithMockUser(username = "user@example.com", roles = "USER")
-    void decrementWithRemoveInCartTest() throws Exception {}
+    void decrementWithRemoveInCartTest() throws Exception {
+        ProductEntity productEntity = loadProduct();
+        UserEntity user = loadUser("user@example.com", UsersRole.USER);
+        loadCart(productEntity, user, 1);
+
+        CartEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+            .orElseThrow();
+        assertEquals(1, cartEntityBefore.getQuantity());
+        assertEquals(1, cartItemRepository.count());
+
+        RequestBuilder requestBuilder = MockMvcRequestBuilders.post(
+                "/api/cart/items/{productId}/decrement",
+                productEntity.getId()
+            )
+            .with(csrf());
+
+        mockMvc.perform(requestBuilder)
+            .andExpect(status().isNoContent())
+            .andExpect(content().string(""));
+
+        assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId()).isEmpty());
+
+        assertEquals(0, cartItemRepository.count());
+    }
 
     @Test
     @WithMockUser(username = "user@example.com", roles = "USER")
-    void deleteProductTest() throws Exception {}
+    void deleteProductTest() throws Exception {
+    }
 
     @Test
     @WithMockUser(username = "user@example.com", roles = "USER")
-    void cleanUserCartTest() throws Exception {}
+    void cleanUserCartTest() throws Exception {
+    }
 
 }
