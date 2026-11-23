@@ -1,0 +1,179 @@
+package org.example.integration;
+
+import org.example.controller.dto.CartResponse;
+import org.example.repository.CartItemRepository;
+import org.example.repository.CategoryRepository;
+import org.example.repository.Entities.CartEntity;
+import org.example.repository.Entities.CategoryEntity;
+import org.example.repository.Entities.ProductEntity;
+import org.example.repository.Entities.UserEntity;
+import org.example.repository.Entities.UserEntity.UsersRole;
+import org.example.repository.ProductRepository;
+import org.example.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@Testcontainers
+public class CartIntegrationTest {
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:15-alpine");
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        cartItemRepository.deleteAll();
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
+        userRepository.deleteAll();
+    }
+
+    private UserEntity loadUser(String name, UsersRole role) {
+        UserEntity user = UserEntity.builder()
+            .name("testUser")
+            .email(name)
+            .role(role)
+            .passwordHash("password")
+            .build();
+        return userRepository.save(user);
+    }
+
+    private ProductEntity loadProduct() {
+        CategoryEntity category = categoryRepository.save(CategoryEntity
+            .builder()
+            .name("Test category")
+            .build()
+        );
+        ProductEntity product = ProductEntity.builder()
+            .name("Test product")
+            .price(new BigDecimal(100))
+            .category(category)
+            .build();
+        return productRepository.save(product);
+    }
+
+    private CartEntity loadCart(ProductEntity product, UserEntity user) {
+        CartEntity cartEntity = CartEntity.builder()
+            .product(product)
+            .user(user)
+            .quantity(1)
+            .build();
+        return cartItemRepository.save(cartEntity);
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    void addItemInCartTest() throws Exception {
+        Long productId = loadProduct().getId();
+        UserEntity user = loadUser("user@example.com", UsersRole.USER);
+
+        assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productId).isEmpty());
+
+        RequestBuilder requestBuilder = MockMvcRequestBuilders
+            .post("/api/cart/items/{productId}/increment", productId)
+            .with(csrf());
+
+
+        String response = mockMvc.perform(requestBuilder)
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
+        assertEquals(productId, cartResponse.productId());
+        assertEquals(1, cartResponse.quantity());
+
+        CartEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productId)
+            .orElseThrow();
+        assertEquals(1, cartEntity.getQuantity());
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    void incrementProductInCartTest() throws Exception {
+        ProductEntity productEntity = loadProduct();
+        UserEntity user = loadUser("user@example.com", UsersRole.USER);
+
+        loadCart(productEntity, user);
+
+        CartEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+            .orElseThrow();
+        assertEquals(1, cartEntityBefore.getQuantity());
+
+        RequestBuilder requestBuilder = MockMvcRequestBuilders
+            .post("/api/cart/items/{productId}/increment", productEntity.getId())
+            .with(csrf());
+
+        String response = mockMvc.perform(requestBuilder)
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
+        assertEquals(productEntity.getId(), cartResponse.productId());
+        assertEquals(2, cartResponse.quantity());
+
+        CartEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+            .orElseThrow();
+        assertEquals(2, cartEntity.getQuantity());
+
+        assertEquals(cartEntityBefore.getId(), cartEntity.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    void decrementProductInCartTest() throws Exception {}
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    void decrementWithRemoveInCartTest() throws Exception {}
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    void deleteProductTest() throws Exception {}
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = "USER")
+    void cleanUserCartTest() throws Exception {}
+
+}
