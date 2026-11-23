@@ -1,12 +1,8 @@
 package org.example.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.example.controller.dto.CartResponse;
-import org.example.repository.CartItemRepository;
-import org.example.repository.Entities.UserEntity;
 import org.example.service.CartService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
 
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +66,7 @@ public class CartController {
     }
 
     @DeleteMapping("/items")
-    public ResponseEntity<Void> clearCart(
+    public ResponseEntity<Void> cleanCart(
         @AuthenticationPrincipal UserDetails user
     ) {
         cartService.clearCart(user.getUsername());
