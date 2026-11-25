@@ -26,11 +26,11 @@ public class CartController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CartResponse>> findCart(
+    public ResponseEntity<CartResponse> findCart(
         @AuthenticationPrincipal
         UserDetails user
     ) {
-        List<CartResponse> responses = cartService.findCart(user.getUsername());
+        CartResponse responses = cartService.findCart(user.getUsername());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 

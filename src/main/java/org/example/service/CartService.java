@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.controller.dto.CartItemResponse;
 import org.example.controller.dto.CartResponse;
 import org.example.exception.ResourceNotFoundException;
 import org.example.exception.ResourceNotFoundException.Resource;
@@ -13,6 +14,8 @@ import org.example.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,14 +39,20 @@ public class CartService {
     }
 
     @Transactional(readOnly = true)
-    public List<CartResponse> findCart(String email) {
+    public CartResponse findCart(String email) {
         UserEntity user = userRepository.findByEmail(email).orElseThrow(() ->
             new ResourceNotFoundException("User does not exist")
         );
-        return cartItemRepository.findCartEntitiesByUserId(user.getId())
-            .stream()
-            .map(cartMapper::toResponse)
-            .toList();
+        List<CartEntity> cartEntities = cartItemRepository.findCartEntitiesByUserId(user.getId());
+        BigDecimal totalPrice = cartEntities.stream()
+            .map(cartEntity -> cartEntity.getProduct().getPrice()
+                .multiply(BigDecimal.valueOf(cartEntity.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return CartResponse.builder()
+            .totalPrice(totalPrice)
+            .items(cartEntities.stream()
+                .map())
+            .build();
     }
 
     @Transactional
