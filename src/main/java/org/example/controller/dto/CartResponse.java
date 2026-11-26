@@ -6,4 +6,4 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Builder
-public record CartResponse(List<CartResponse> items, BigDecimal totalPrice) {}
+public record CartResponse(List<CartItemsResponse> items, BigDecimal totalPrice) {}
