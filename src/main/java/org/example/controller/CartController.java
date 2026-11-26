@@ -13,9 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
-
 @RestController
 @RequestMapping("/api/cart")
 public class CartController {
@@ -26,11 +23,11 @@ public class CartController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CartResponse>> findCart(
+    public ResponseEntity<CartResponse> findCart(
         @AuthenticationPrincipal
         UserDetails user
     ) {
-        List<CartResponse> responses = cartService.findCart(user.getUsername());
+        CartResponse responses = cartService.findCart(user.getUsername());
         return ResponseEntity.status(HttpStatus.OK).body(responses);
     }
 
@@ -40,9 +37,6 @@ public class CartController {
         @PathVariable Long productId
     ) {
         CartResponse response = cartService.incrementProduct(user.getUsername(), productId);
-        if (response.quantity() == 1) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -51,25 +45,24 @@ public class CartController {
         @AuthenticationPrincipal UserDetails user,
         @PathVariable Long productId
     ) {
-        Optional<CartResponse> response = cartService.decrementProduct(user.getUsername(), productId);
-        return response.map(cartResponse -> ResponseEntity.status(HttpStatus.OK).body(cartResponse))
-            .orElseGet(() -> ResponseEntity.status(HttpStatus.NO_CONTENT).body(null));
+        CartResponse response = cartService.decrementProduct(user.getUsername(), productId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/items/{productId}")
-    public ResponseEntity<Void> deleteProduct(
+    public ResponseEntity<CartResponse> deleteProduct(
         @AuthenticationPrincipal UserDetails user,
         @PathVariable Long productId
     ) {
-        cartService.deleteProduct(user.getUsername(), productId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        CartResponse cartResponse = cartService.deleteProduct(user.getUsername(), productId);
+        return ResponseEntity.status(HttpStatus.OK).body(cartResponse);
     }
 
     @DeleteMapping("/items")
-    public ResponseEntity<Void> cleanCart(
+    public ResponseEntity<CartResponse> cleanCart(
         @AuthenticationPrincipal UserDetails user
     ) {
-        cartService.clearCart(user.getUsername());
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        CartResponse cartResponse = cartService.clearCart(user.getUsername());
+        return ResponseEntity.status(HttpStatus.OK).body(cartResponse);
     }
 }

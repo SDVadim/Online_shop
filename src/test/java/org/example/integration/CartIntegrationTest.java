@@ -3,7 +3,7 @@ package org.example.integration;
 import org.example.controller.dto.CartResponse;
 import org.example.repository.CartItemRepository;
 import org.example.repository.CategoryRepository;
-import org.example.repository.Entities.CartEntity;
+import org.example.repository.Entities.CartItemEntity;
 import org.example.repository.Entities.CategoryEntity;
 import org.example.repository.Entities.ProductEntity;
 import org.example.repository.Entities.UserEntity;
@@ -12,15 +12,19 @@ import org.example.repository.ProductRepository;
 import org.example.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -38,7 +42,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -75,7 +78,8 @@ public class CartIntegrationTest {
         userRepository.deleteAll();
     }
 
-    private record UserData(String email, UsersRole role) {}
+    private record UserData(String email, UsersRole role) {
+    }
 
     private List<UserEntity> loadUser(List<UserData> userData) {
         List<UserEntity> entities = new ArrayList<>();
@@ -110,11 +114,13 @@ public class CartIntegrationTest {
         return List.of(productRepository.save(product1), productRepository.save(product2));
     }
 
-    private record CartData(ProductEntity productEntity, UserEntity userEntity, int quantity) {}
+    private record CartData(ProductEntity productEntity, UserEntity userEntity,
+                            int quantity) {
+    }
 
     private void loadCart(List<CartData> carts) {
         carts.forEach(cartData -> {
-            CartEntity cartEntity = CartEntity.builder()
+            CartItemEntity cartEntity = CartItemEntity.builder()
                 .product(cartData.productEntity)
                 .user(cartData.userEntity)
                 .quantity(cartData.quantity)
@@ -138,16 +144,16 @@ public class CartIntegrationTest {
 
 
         String response = mockMvc.perform(requestBuilder)
-            .andExpect(status().isCreated())
+            .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
 
         CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
-        assertEquals(productId, cartResponse.productId());
-        assertEquals(1, cartResponse.quantity());
+        assertEquals(1, cartResponse.items().stream().filter(item -> Objects.equals(item.productId(), productId)).findFirst().get().quantity());
 
-        CartEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productId)
+
+        CartItemEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productId)
             .orElseThrow();
         assertEquals(1, cartEntity.getQuantity());
     }
@@ -159,7 +165,7 @@ public class CartIntegrationTest {
 
         loadCart(List.of(new CartData(productEntity, user, 1)));
 
-        CartEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+        CartItemEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
             .orElseThrow();
         assertEquals(1, cartEntityBefore.getQuantity());
 
@@ -175,10 +181,9 @@ public class CartIntegrationTest {
             .getContentAsString();
 
         CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
-        assertEquals(productEntity.getId(), cartResponse.productId());
-        assertEquals(2, cartResponse.quantity());
+        assertEquals(2, cartResponse.items().stream().filter(item -> Objects.equals(item.productId(), productEntity.getId())).findFirst().get().quantity());
 
-        CartEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+        CartItemEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
             .orElseThrow();
         assertEquals(2, cartEntity.getQuantity());
 
@@ -191,13 +196,13 @@ public class CartIntegrationTest {
         UserEntity user = loadUser(List.of(new UserData("user1@example.com", UsersRole.USER))).getFirst();
         loadCart(List.of(new CartData(productEntity, user, 2)));
 
-        CartEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+        CartItemEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
             .orElseThrow();
         assertEquals(2, cartEntityBefore.getQuantity());
         assertEquals(1, cartItemRepository.count());
 
         RequestBuilder requestBuilder = MockMvcRequestBuilders.post(
-            "/api/cart/items/{productId}/decrement",
+                "/api/cart/items/{productId}/decrement",
                 productEntity.getId()
             )
             .with(user("user1@example.com"))
@@ -210,10 +215,9 @@ public class CartIntegrationTest {
             .getContentAsString();
 
         CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
-        assertEquals(productEntity.getId(), cartResponse.productId());
-        assertEquals(1, cartResponse.quantity());
+        assertEquals(1, cartResponse.items().stream().filter(item -> Objects.equals(item.productId(), productEntity.getId())).findFirst().get().quantity());
 
-        CartEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+        CartItemEntity cartEntity = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
             .orElseThrow();
         assertEquals(1, cartEntity.getQuantity());
 
@@ -226,8 +230,8 @@ public class CartIntegrationTest {
         ProductEntity productEntity = loadProducts().getFirst();
         UserEntity user = loadUser(List.of(new UserData("user1@example.com", UsersRole.USER))).getFirst();
         loadCart(List.of(new CartData(productEntity, user, 1)));
-
-        CartEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
+        int sizeBefore = cartItemRepository.findCartEntitiesByUserId(user.getId()).size();
+        CartItemEntity cartEntityBefore = cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId())
             .orElseThrow();
         assertEquals(1, cartEntityBefore.getQuantity());
         assertEquals(1, cartItemRepository.count());
@@ -239,13 +243,18 @@ public class CartIntegrationTest {
             .with(user("user1@example.com"))
             .with(csrf());
 
-        mockMvc.perform(requestBuilder)
-            .andExpect(status().isNoContent())
-            .andExpect(content().string(""));
+        String response = mockMvc.perform(requestBuilder)
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
+
+        assertEquals(sizeBefore - 1, cartItemRepository.findCartEntitiesByUserId(user.getId()).size());
+        assertEquals(sizeBefore - 1, cartResponse.items().size());
 
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId()).isEmpty());
-
-        assertEquals(0, cartItemRepository.count());
     }
 
     @Test
@@ -253,21 +262,27 @@ public class CartIntegrationTest {
         ProductEntity productEntity = loadProducts().getFirst();
         UserEntity user = loadUser(List.of(new UserData("user1@example.com", UsersRole.USER))).getFirst();
         loadCart(List.of(new CartData(productEntity, user, 14)));
-
+        int sizeBefore = cartItemRepository.findCartEntitiesByUserId(user.getId()).size();
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId()).isPresent());
 
         RequestBuilder requestBuilder = MockMvcRequestBuilders.delete(
-            "/api/cart/items/{productId}",
+                "/api/cart/items/{productId}",
                 productEntity.getId()
             )
             .with(user("user1@example.com"))
             .with(csrf());
 
-        mockMvc.perform(requestBuilder)
-            .andExpect(status().isNoContent());
+        String response = mockMvc.perform(requestBuilder)
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
+        CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
+
+        assertEquals(sizeBefore - 1, cartItemRepository.findCartEntitiesByUserId(user.getId()).size());
+        assertEquals(sizeBefore - 1, cartResponse.items().size());
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntity.getId()).isEmpty());
-        assertEquals(0, cartItemRepository.count());
     }
 
     @Test
@@ -275,7 +290,7 @@ public class CartIntegrationTest {
         List<ProductEntity> productEntities = loadProducts();
         UserEntity user = loadUser(List.of(new UserData("user1@example.com", UsersRole.USER))).getFirst();
         loadCart(List.of(new CartData(productEntities.getFirst(), user, 1), new CartData(productEntities.getLast(), user, 2)));
-
+        assertTrue(!cartItemRepository.findCartEntitiesByUserId(user.getId()).isEmpty());
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntities.getFirst().getId()).isPresent());
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntities.getLast().getId()).isPresent());
 
@@ -284,11 +299,24 @@ public class CartIntegrationTest {
             .with(user("user1@example.com"))
             .with(csrf());
 
-        mockMvc.perform(requestBuilder)
-            .andExpect(status().isNoContent());
+        String response = mockMvc.perform(requestBuilder)
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
+        CartResponse cartResponse = objectMapper.readValue(response, CartResponse.class);
+
+        assertEquals(0, cartResponse.items().size());
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntities.getFirst().getId()).isEmpty());
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(user.getId(), productEntities.getLast().getId()).isEmpty());
+        assertEquals(0, cartItemRepository.findCartEntitiesByUserId(user.getId()).size());
+    }
+
+    @Test
+    @WithUserDetails
+    void checkCartPriceTest() {
+
     }
 
     @Test
@@ -320,7 +348,7 @@ public class CartIntegrationTest {
             .with(csrf());
 
         mockMvc.perform(requestBuilder1)
-            .andExpect(status().isNoContent());
+            .andExpect(status().isOk());
 
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(usersEntities.getFirst().getId(), productEntities.getFirst().getId()).isEmpty());
         assertTrue(cartItemRepository.findCartEntitiesByUserIdAndProductId(usersEntities.getFirst().getId(), productEntities.getLast().getId()).isEmpty());
@@ -409,12 +437,12 @@ public class CartIntegrationTest {
             );
         }
 
-        List<CartEntity> items =
+        List<CartItemEntity> items =
             cartItemRepository.findCartEntitiesByUserId(userId);
 
         assertEquals(1, items.size());
 
-        CartEntity item = cartItemRepository
+        CartItemEntity item = cartItemRepository
             .findCartEntitiesByUserIdAndProductId(userId, productId)
             .orElseThrow();
 
